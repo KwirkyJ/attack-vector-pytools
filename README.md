@@ -76,7 +76,7 @@ A column may be empty, in which case there is no additional movement.
 
 Returns `"STILL"` if the vector is motionless.
 
-### function: `avt.shellstar(Vector-to-target, crossing-Vector, muzzle-velocity [, segment=segment)`
+### function: `avt.shellstar(Vector-to-target, crossing-Vector, muzzle-velocity [, segment=segment])`
 Generate seeker shellstar info.
 
 Takes a bearing vector to target and relative velocity vector of the target
