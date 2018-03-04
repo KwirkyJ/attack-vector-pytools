@@ -45,7 +45,7 @@ cases, the vector string may contain more than three terms, e.g.
 The vector string is _not_ case-sensitive, so `"4f"` is equivalent to `"4F"`.
 The "motionless" vector string is the empty string, `""`.
 
-### function: avt.movement(<vector-string>)
+### function:` avt.movement(vector_string)`
 Get a 'pretty-formatted' string to fill out one's movement grid.
 
 The vector string may include more than three terms -- vectors are consolidated
@@ -76,8 +76,8 @@ A column may be empty, in which case there is no additional movement.
 
 Returns `"STILL"` if the vector is motionless.
 
-### function: avt.shellstar(<Vector-to-target>, <crossing-Vector>, <muzzle-velocity>
-[, segment=<segment>)
+### function: `avt.shellstar(Vector-to-target, crossing-Vector, muzzle-velocity
+[, segment=segment)`
 Generate seeker shellstar info.
 
 Takes a bearing vector to target and relative velocity vector of the target
@@ -140,7 +140,7 @@ Were the `segment` not provided above, the time-distance track would have read:
 
 #### Note - missiles are not yet implemented. Coming soon.
 
-### class: avt.Vector
+### class: `avt.Vector`
 Representation of velocity or position in hexagonal coordinates.
 
 Relies on AV:T's 'AVID' directions, (A, B, C, D, E, F, +, -) for user
@@ -148,7 +148,7 @@ interaction, but converts to an intenal format for easier math.
 
 Created by (and interacts with user) through 'vector strings', each being
 either the empty string (""), indicating a zeroed vector, or a string
-containing a number of <number><direction> sequences separated by spaces,
+containing a number of `<number><direction>` sequences separated by spaces,
 e.g., "5F", "4A 2C 6+", "1A 5d 2+ 3b 7- 6E". Note that case is unimportant in
 user input, but all output will be capitalized.
 
@@ -170,7 +170,7 @@ Vector instances have a number of useful routines:
 + `<Vector>.movement_grid()`
     + Look up and format the movement grid for the vector.
 
-### function: avt.Vector(<vector_string>)
+### function: `avt.Vector(vector_string)`
 Create Vector instance from a vector string.
 
 Order and count of components is not important, e.g., "5F", "4A 2C 6+",
@@ -187,7 +187,7 @@ Raises an error of some sort if `vecstr` is not a string.
 
 The empy string ("") returns the zero vector.
 
-### function: <avt.Vector>.bearing()
+### function: `<avt.Vector>.bearing()`
 Get distance and AVID window of vector, relative to zero.
 
 Distance and window are separated by a space; distance is the integer
@@ -200,7 +200,7 @@ components.
 
 "Green-ring windows" (B/C++, e.g.) may occur -- interpret per rules.
 
-### function: <avt.Vector>.cartesian()
+### function: `<avt.Vector>.cartesian()`
 Get cartesian (X,Y,Z) components of the Vector.
 
 Returns a dictionary with keys of 'X', 'Y', and 'Z', with values of type
@@ -208,7 +208,7 @@ Returns a dictionary with keys of 'X', 'Y', and 'Z', with values of type
 
 Positive 'X' is in direction 'B/C', 'Y' in 'A', and 'Z' in '+'.
 
-### function: <avt.Vector>.movement_grid()
+### function: `<avt.Vector>.movement_grid()`
 Pretty-format a movement grid for this vector.
 
 If the zero vector, returns "STILL".
