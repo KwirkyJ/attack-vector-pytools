@@ -20,6 +20,13 @@ Once the interpreter is running, import the utils module, e.g.,
 After importing the tools, you are now ready to start playing.
 See the tools descriptions below for more details.
 
+#### Note - output formatting
+By default, many functions return a formatted string -- this as distinct from
+printing. It is recommended that you either:
++ wrap them in your own functions to print.
++ invoke them in a print statment, then modify past invocations from your
+  python history.
+
 ## Tools Details
 
 attack-vector-tools provides a number of functions and classes to facilitate
