@@ -18,7 +18,7 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7|*| |*|",
             "8|*|*| |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_one_h_one_v(self) :
         vector = avt.Vector("13A 1-")
@@ -34,7 +34,7 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7|*| | |",
             "8|*| | |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_one_v(self) :
         vector = avt.Vector("8-")
@@ -50,7 +50,7 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7| | | |",
             "8| | | |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_one_h(self) :
         vector = avt.Vector("7F")
@@ -66,7 +66,7 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7|*| | |",
             "8|*| | |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_opposites_h(self) :
         vector = avt.Vector("6F 3D 1-")
@@ -83,7 +83,7 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7|*| | |",
             "8| |*| |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_three_h(self) :
         vector = avt.Vector("6F 3D 1A")
@@ -100,7 +100,7 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7|*| | |",
             "8| |*| |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_menagerie(self) :
         vector = avt.Vector("9+ 6F 3D 1A 2-")
@@ -117,12 +117,12 @@ class TestVectorToMovementGrid(unittest.TestCase) :
             "7|*| |*|",
             "8| |*| |",
         ]
-        self.assertEqual('\n'.join(expected), vector.get_movement_grid())
+        self.assertEqual('\n'.join(expected), vector.movement_grid())
 
     def test_everything_cancels(self) :
         vector = avt.Vector("14F 14D 14A 14B 14C 14E 6- 6+")
         expected = "STILL"
-        self.assertEqual(expected, vector.get_movement_grid())
+        self.assertEqual(expected, vector.movement_grid())
 # end TestVectorToMovementGrid
 
 class TestVectorClassCreation(unittest.TestCase) :
@@ -258,42 +258,42 @@ class TestVectorClassMath(unittest.TestCase) :
         self.assertEqual("5D 3E 1+", str(v2))
 #end TestVectorClassMath
 
-class TestVectorClassToBearing(unittest.TestCase) :
+class TestVectorClassBearing(unittest.TestCase) :
     def test_static(self) :
-        self.assertEqual("NONE", avt.Vector("").to_bearing())
+        self.assertEqual("NONE", avt.Vector("").bearing())
 
     def test_23B(self) :
-        self.assertEqual("23 B", avt.Vector("23B").to_bearing())
+        self.assertEqual("23 B", avt.Vector("23B").bearing())
 
     def test_8D_5C(self) :
-        self.assertEqual("11 C/D", avt.Vector("8D 5C").to_bearing())
+        self.assertEqual("11 C/D", avt.Vector("8D 5C").bearing())
 
     def test_5D_8C_rawcount(self) :
-        self.assertEqual("13 C/D", avt.Vector("8C 5D").to_bearing(count=True))
+        self.assertEqual("13 C/D", avt.Vector("8C 5D").bearing(count=True))
 
     def test_8up(self) :
-        self.assertEqual("8 +++", avt.Vector("8+").to_bearing())
+        self.assertEqual("8 +++", avt.Vector("8+").bearing())
 
     def test_4down(self) :
-        self.assertEqual("4 ---", avt.Vector("4-").to_bearing(count=True))
+        self.assertEqual("4 ---", avt.Vector("4-").bearing(count=True))
 
     def test_5D_8C_12up(self) :
-        self.assertEqual("17 C/D++", avt.Vector("8C 5D 12+").to_bearing())
+        self.assertEqual("17 C/D++", avt.Vector("8C 5D 12+").bearing())
 
     def test_12E_14up(self) :
-        self.assertEqual("18 E++", avt.Vector("12E 14+").to_bearing())
+        self.assertEqual("18 E++", avt.Vector("12E 14+").bearing())
 
     def test_2A_12down(self) :
-        self.assertEqual("12 ---", avt.Vector("2A 12-").to_bearing())
-#end TestVectorClassToBearing
+        self.assertEqual("12 ---", avt.Vector("2A 12-").bearing())
+#end TestVectorClassBearing
 
-class TestVectorClassToCartesian(unittest.TestCase) :
+class TestVectorClassCartesian(unittest.TestCase) :
     sin60 = Decimal(sin(pi/3))
 
     def test_static(self) :
         self.assertEqual(
                 {'x':Decimal(0), 'y':Decimal(0), 'z':Decimal(0)},
-                avt.Vector("").to_cartesian())
+                avt.Vector("").cartesian())
 
     def test_3f_7a_2up(self) :
         self.assertEqual(
@@ -301,8 +301,8 @@ class TestVectorClassToCartesian(unittest.TestCase) :
                     'y':Decimal('8.5'),
                     'z':Decimal(2)
                 },
-                avt.Vector("3f 7a 2+").to_cartesian())
-#end TestVectorClassToCartesian
+                avt.Vector("3f 7a 2+").cartesian())
+#end TestVectorClassCartesian
 
 class TestGetBearingFromCoords(unittest.TestCase) :
     pass
@@ -318,38 +318,33 @@ class TestGetBearingVectorFromTile(unittest.TestCase) :
     def test_same_corner(self) :
         v = avt.get_bearing_vector_from_tile(3,2,8,0,-3, 4,1,0,16,-3)
         self.assertEqual("STILL", str(v))
-        self.assertEqual("NONE", v.to_bearing())
+        self.assertEqual("NONE", v.bearing())
 
     def test_in_same_tile(self) :
         v = avt.get_bearing_vector_from_tile(-3,2,4,9,4, -3,2,15,5,0)
         self.assertEqual("7C 4B 4-", str(v))
-        self.assertEqual("10 B/C-", v.to_bearing())
+        self.assertEqual("10 B/C-", v.bearing())
 
     def test_big_gap(self) :
         v = avt.get_bearing_vector_from_tile(3,2,4,13,-3, -1,7,9,2,3)
         self.assertEqual("42D 19E 6+", str(v))
-        self.assertEqual("54 D/E", v.to_bearing())
+        self.assertEqual("54 D/E", v.bearing())
 
     def test_big_vertical(self) :
         v = avt.get_bearing_vector_from_tile(0,7,4,11,-13, -1,7,9,6,17)
         self.assertEqual("8F 3E 30+", str(v))
-        self.assertEqual("32 E/F++", v.to_bearing())
+        self.assertEqual("32 E/F++", v.bearing())
 
     def test_different_radius(self) :
         avt.SET_TILE_RADIUS(6)
         v = avt.get_bearing_vector_from_tile(2,3,4,4,3, 3,4,8,6,8)
         self.assertEqual("22C 2D 5+", str(v))
-        self.assertEqual("24 C", v.to_bearing())
+        self.assertEqual("24 C", v.bearing())
 #end TestGetBearingVectorFromTile
 
 class TestGetBearingFromGrid(unittest.TestCase) :
     pass
 #end TestGetBearingFromGrid
-
-class TestCV(unittest.TestCase) :
-    def test_example(self) :
-        self.assertEqual("15 E/F", avt.cv('8a 9b', '8f 12a 2+'))
-#end TestCV
 
 class TestMovement(unittest.TestCase) :
     def test_example(self) :

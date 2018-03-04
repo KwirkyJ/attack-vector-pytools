@@ -1,64 +1,25 @@
+"""
+Gameplay aids for 'Attack Vector: Tactical'.
+
+Functions:
+
+    avt.movement(vector_string)
+        Get 'pretty-formatted' string for movement grid.
+
+    avt.shellstar(
+            Vector_to_target,
+            crossing_Vector,
+            muzzle_velocity,
+            segment=0)
+        Generate seeker shellstar info.
+
+Classes:
+    Vector
+"""
+
 from math import floor, pi, sin, sqrt
 from decimal import Decimal
 import movement_grid_remainders as remainders
-
-# provide gameplay aids for Attack Vector:Tactical
-#
-# MODULE ROUTINE(S)
-#
-# avt.SET_TILE_RADIUS(r)
-#     if using tiling hexgrids, changes the tile size (default 8)
-#
-# avt.cv(<my_vector_string>, <other_vector_string>)
-#     get the "bearing" of a crossing vector
-#
-# avt.get_bearing_vector_from_tile(...)
-#     get the "bearing" between two coordinates
-#     arguments are two repetitions of J, K, U, V, +/- on the tiled grid
-#     loosely, ...from_tile(<from_coord>, <to_coord>)
-#     e.g. `avt.get_bearing_vector_from_tile(1,1,8,5,3, 0,-1,12,4,-2)`
-#        -> `Vector("28F 9A 5-")`
-#        -> `'34 F'` (to_bearing())
-#
-# atv.movement(<vector_string>)
-#     pretty-format the resulting vector and movement grid
-#     include thrust dots -- vectors are consolidated automagically
-#
-# avt.shellstar(<vector_to_target>, <crossing_vector>, <muzzle_velocity> [, segment = <launch_segment>] )
-#     get shellstar information for a given shot
-#     if unable to hit, reports No Shot
-#     else, gives 
-#     + impact window in parentheses and evasion directions,
-#     + thrust requirements to evade,
-#     + time/distance (t/d) track
-#     + RoC of impact velocity
-#     if segment is provided, uses correct target movement and includes turn:segment in t/d track
-#     else, assumes segment 1 and reports segments elapsed in t/d track
-#
-# CLASS(ES)
-
-# avt.Vector
-#
-# represents arbitrary vector on the AVID
-#
-# constructor: Vector(<string>)
-#     takes a string, e.g. "3f 17e 3+" for components
-#     empty string is all-zero components
-#     vectors are consolidated
-# str(<Vector>)
-#     compont string of vector (see above example)
-# <Vector>.get_movement_grid()
-#     return a multi-line string tabulating the movement grid
-#     assumes vector represents velocity vectors
-# <Vector>.to_bearing()
-#     return "distance" and "AVID window" relative to 'Zero'
-# Vector arithmetic <Vector> +|- <Vector>
-#     create new Vector resulting from addition or subtraction of components
-#
-# avt.AVID
-# for manipulation and computation of avid windows
-
-
 
 _CARDINAL_H = ['A', 'B', 'C', 'D', 'E', 'F']
 _CARDINAL_V = ['+', '-']
@@ -67,6 +28,7 @@ _CARDINALS = _CARDINAL_H + _CARDINAL_V
 _TILE_RADIUS = 8
 
 def SET_TILE_RADIUS(r) :
+    """Set radius used in tile computation."""
     #assert type(r) == int, "invalid radius type"
     #assert r%2 == 0, "radius must be even"
     #assert r > 0, "radius must be greater than zero"
@@ -77,7 +39,7 @@ _SIN60 = Decimal(sin(pi/3))
 _HALF_DECIMAL = Decimal('0.5')
 
 def _uvp_from_vectors(vectors) :
-    """convert "vectors" dictionary to U,V,+ dictionary"""
+    """Convert 'vectors' dictionary to U,V,+ dictionary."""
     uvp = {
         'U' : Decimal(0),
         'V' : Decimal(0),
@@ -97,7 +59,11 @@ def _uvp_from_vectors(vectors) :
 #end _uvp_from_vectors
 
 def __place_in_vector(d, magnitude, pos_dir, neg_dir) :
-    """given a scalar integer `magnitude`, place in `d[?_dir]` depending on sign"""
+    """Place integer `magnitude` in vector dict `d` by direction.
+
+    If `magnitude` is positive, is placed in `d[pos_dir]`.
+    If `magnitude` is negative, is placed in `d[neg_dir]`.
+    """
     if magnitude > 0 :
         d[pos_dir] = magnitude
     elif magnitude < 0 :
@@ -105,7 +71,14 @@ def __place_in_vector(d, magnitude, pos_dir, neg_dir) :
 #end __place_in_vector
 
 def __consolidate_120(d, dccw, dir, d_cw) :
-    """if dccw and d_cw are nonzero, subtract smaller from opposite and add smaller to dir"""
+    """Consolidate vectors dictionary d.
+
+    Given that `dir`, `d_cw`, and `dccw` are valid directions
+    in the vector dictionary `d` (center, clockwise, and
+    counterclockwise, respectively), if values in `d[dccw]` and 
+    `d[d_cw]` are nonzero, subtract smaller from opposite and add
+    smaller to `d[dir]`
+    """
     v_cw = d[d_cw]
     vccw = d[dccw]
     lesser, greater = None, None
@@ -122,6 +95,7 @@ def __consolidate_120(d, dccw, dir, d_cw) :
 #end __consolidate_120
 
 def _vectors_from_uvp(uvp) :
+    """Convert "UV+" dictionary to a vector dictionary."""
     vectors = dict(zip(_CARDINALS, 
                        (Decimal(0) for _ in range(len(_CARDINALS)))))
     __place_in_vector(vectors, uvp['+'], '+', '-')
@@ -133,24 +107,60 @@ def _vectors_from_uvp(uvp) :
 #end _vectors_from_uvp
 
 class Vector :
+    """Representation of velocity or position in hexagonal coordinates.
+
+    Relies on AV:T's 'AVID' directions, (A, B, C, D, E, F, +, -) for
+    user interaction, but converts to an intenal format for easier math.
+
+    Created by (and interacts with user) through 'vector strings', each
+    being either the empty string (""), indicating a zeroed vector,
+    or a string containing a number of <number><direction> sequences
+    separated by spaces, e.g. "5F", "4A 2C 6+", "1A 5d 2+ 3b 7- 6E".
+    Note that case is unimportant in user input, but all output will be
+    capitalized.
+
+    Example instantiation: `vector_instance = avt.Vector("4A 2C 6+")`
+
+    Basic arithmetic is supported for Vector instances, with addition and
+    subtracting creating new Vector instances from the result.
+
+    Python's built-in To-string method `str(<Vector>)` is supported,
+    providing an instance's vector string.
+
+    Vector instances have a number of useful routines:
+        bearing()
+            Get the (rounded) distance and AVID window of a Vector.
+            Assumes relative to the zero vector.
+        cartesian()
+            Get a dictionary with 'X', 'Y', and 'Z' terms from Vector..
+            Values are Decimal objects.
+        movement_grid()
+            Look up and format the movement grid for the Vector.
+    """
+
     def __init__(self, vecstr) :
-        """
-        take vector string and create vector instance
+        """Create Vector instance from a vector string.
 
-        order of components is not important
-        e.g., "5F", "4A 2C 6+", "1A 5D 2+ 3B 7- 6E"
+        Order and count of components is not important,
+        e.g., "5F", "4A 2C 6+", "1A 5D 2+ 3B 7- 6E",
+        as vectors are automatically normalized into at most two
+        horizontal components adjacent to one another, and at most one
+        vertical component.
 
-        vectors are automatically normalized into at most two horizontal components
-        adjacent to one another, and at most one vertical component
+        Raises ValueError if:
+        + a number is negative
+        + a duplicate direction is encountered
+        + direction is not recognized
 
-        TODO: duplicate vectors raise ValueError
-        TODO: malformed vector (bad direction, no number) raise ValueError
+        Raises an error of some sort if `vecstr` is not a string.
+
+        The empy string ("") returns the zero vector.
         """
 
         vectors = dict(zip(_CARDINALS, 
                            (Decimal(0) for _ in range(len(_CARDINALS)))))
         seen = []
-        for elem in vecstr.split() :
+        for elem in vecstr.strip().split() :
             num = int(elem[:-1])
             if num < 0 :
                 raise ValueError("negative value {}".format(elem))
@@ -195,7 +205,7 @@ class Vector :
         return (major, minor, vertical)
 
     def __str__(self) :
-        """return formatted vector string with cardinal directions"""
+        """Return formatted vector string with cardinal directions."""
 
         (major, minor, vertical) = self._major_minor_vertical()
         if major[0] == 0 :
@@ -235,14 +245,19 @@ class Vector :
         h_dist += (minor[0] * _SIN60)**2
         return (h_dist + vertical[0]**2).sqrt()
 
-    def to_bearing(self, count=False) :
-        """
-        get distance and 'window' of vector
+    def bearing(self, count=False) :
+        """Get distance and AVID window of vector, relative to zero.
 
-        by default, uses mathematical tricks to get exact distance 
-        if `count` is True, this correction is not done and `dist = major+minor`
+        Distance and window are separated by a space; distance is the
+        integer (rounded, if relevant) from zero to this vector instance.
+        The window is the bearing through which the vector is seen from
+        the zero vector.
 
-        angel-edge windows (B/C++, e.g.) may occur--interpret per rules
+        By default, uses mathematical tricks to get exact distance.
+        If `count` is True, this correction is not done and horizontal
+        distance is the sum of horizontal components.
+
+        Green-ring windows (B/C++, e.g.) may occur -- interpret per rules.
         """
         (major, minor, vertical) = self._major_minor_vertical()
         dir = major[1]
@@ -285,7 +300,18 @@ class Vector :
         dist = floor(dist_pow.sqrt() + Decimal('0.5'))
         return "{} {}{}".format(dist, dir, vertical[1]*height)
 
-    def get_movement_grid(self) :
+    def movement_grid(self) :
+        """Pretty-format a movement grid for this vector.
+
+        If the zero vector, returns "STILL".
+        Else, returns columns for each major horizontal, minor
+        horizontal, and vertical movement component. First row is
+        direction, second row is movement 'each' segment, remaining rows
+        are the remainder grid, indexed by segment number.
+
+        When a column is empty, there is no movement that applies. This
+        may occur when there is no 'minor' or vertical component.
+        """
         (major, minor, vertical) = self._major_minor_vertical()
         if major[0] == 0 and vertical[0] == 0 :
             return "STILL"
@@ -327,10 +353,13 @@ class Vector :
             grid.append('|'.join([str(i+1), maj, min, vert, '']))
         return '\n'.join(header + grid)
 
-    def to_cartesian(self) :
-        """get 'X','Y','Z' vectors (vs 'U','V','+')
+    def cartesian(self) :
+        """Get cartesian (X,Y,Z) components of the Vector.
 
-        positive 'X' is in direction B/C, 'Y' in A, and 'Z' in +
+        Returns a dictionary with keys of 'X', 'Y', and 'Z', with
+        values of type `decimal.Decimal` for precision.
+
+        Positive 'X' is in direction 'B/C', 'Y' in 'A', and 'Z' in '+'.
         """
         global _SIN60
         global _HALF_DECIMAL
@@ -735,6 +764,11 @@ class AVID() :
 #end class AVID
 
 def get_bearing_vector_from_tile(j0, k0, u0, v0, h0, j1, k1, u1, v1, h1) :
+    """Given tile coordinates for two locations, get bearing Vector.
+
+    Takes j,k,u,v,h (tile coords, grid coords, height) of `from` and
+    `to`, returning relative vector to `to`.
+    """
     dj = j1 - j0
     dk = k1 - k0
     du = u1 - u0
@@ -751,14 +785,20 @@ def get_bearing_vector_from_tile(j0, k0, u0, v0, h0, j1, k1, u1, v1, h1) :
     v._uvp_vectors = uvp
     return v
 
-def cv(my_v, zir_v) :
-    """get the "bearing" crossing vector"""
-
-    return (Vector(zir_v) - Vector(my_v)).to_bearing()
-
 def movement(vector_string) :
+    """Get a 'pretty-formatted' string to fill out one's movement grid.
+
+    The vector string may include more than three terms -- vectors
+    are consolidated into resulting three-term vector with adjacent
+    horizontal terms.
+
+    Provides the resulting vector and a movement grid, where the grid
+    has columns for each direction, its "each" movement, and the
+    remainder grid has an astrisk if movement is to occur during the
+    segment (number on the left)
+    """
     v = Vector(vector_string)
-    return '\n'.join([str(v), "", v.get_movement_grid()])
+    return '\n'.join([str(v), "", v.movement_grid()])
 
 _TO_EVADE = [
     "N/A"
@@ -819,7 +859,7 @@ def shellstar(
 
     target_movement = []
 
-    grid = crossing_vector.get_movement_grid()
+    grid = crossing_vector.movement_grid()
     if grid is "STILL" :
         target_movement = ['' for _ in range(8)]
     else :
@@ -905,7 +945,7 @@ def shellstar(
     # --------------------------------------
 
     impact_vector = Vector("") - vector_to_target
-    impact_window = impact_vector.to_bearing().split()[1]
+    impact_window = impact_vector.bearing().split()[1]
     evasion_options = []
     if impact_window in ["+++", "---"] :
         evasion_options.append("({})".format(impact_window))
@@ -935,8 +975,8 @@ def shellstar(
     # Rate of closure
     # ---------------
 
-    target_xyz_v = crossing_vector.to_cartesian()
-    seeker_xyz = vector_to_target.to_cartesian() # vector to impact point
+    target_xyz_v = crossing_vector.cartesian()
+    seeker_xyz = vector_to_target.cartesian() # vector to impact point
     _from_dist_to_mv = muzzle_velocity / vector_to_target._cartesian_magnitude()
     seeker_xyz_v = {k: v * _from_dist_to_mv for k,v in seeker_xyz.items()}
 
