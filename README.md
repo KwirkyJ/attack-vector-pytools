@@ -76,8 +76,7 @@ A column may be empty, in which case there is no additional movement.
 
 Returns `"STILL"` if the vector is motionless.
 
-### function: `avt.shellstar(Vector-to-target, crossing-Vector, muzzle-velocity
-[, segment=segment)`
+### function: `avt.shellstar(Vector-to-target, crossing-Vector, muzzle-velocity [, segment=segment)`
 Generate seeker shellstar info.
 
 Takes a bearing vector to target and relative velocity vector of the target
@@ -187,7 +186,7 @@ Raises an error of some sort if `vecstr` is not a string.
 
 The empy string ("") returns the zero vector.
 
-### function: `<avt.Vector>.bearing()`
+### function: `<Vector>.bearing()`
 Get distance and AVID window of vector, relative to zero.
 
 Distance and window are separated by a space; distance is the integer
@@ -200,7 +199,7 @@ components.
 
 "Green-ring windows" (B/C++, e.g.) may occur -- interpret per rules.
 
-### function: `<avt.Vector>.cartesian()`
+### function: `<Vector>.cartesian()`
 Get cartesian (X,Y,Z) components of the Vector.
 
 Returns a dictionary with keys of 'X', 'Y', and 'Z', with values of type
@@ -208,7 +207,7 @@ Returns a dictionary with keys of 'X', 'Y', and 'Z', with values of type
 
 Positive 'X' is in direction 'B/C', 'Y' in 'A', and 'Z' in '+'.
 
-### function: `<avt.Vector>.movement_grid()`
+### function: `<Vector>.movement_grid()`
 Pretty-format a movement grid for this vector.
 
 If the zero vector, returns "STILL".
